@@ -53,7 +53,7 @@ public class ChatbotAiBackendApplication implements CommandLineRunner {
 				80085,
 				"Zebra",
 				Gender.MALE,
-				"boobies.jpg",
+				"I like boobs",
 				"boobies.jpg",
 				Mbt.ESFP
 		);

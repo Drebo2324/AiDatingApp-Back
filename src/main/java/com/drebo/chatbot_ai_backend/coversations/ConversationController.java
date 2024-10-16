@@ -20,6 +20,14 @@ public class ConversationController {
         this.profileRepo = profileRepo;
     }
 
+    @GetMapping("/conversations/{conversationId}")
+    public Conversation getConversation(@PathVariable String conversationId){
+        Conversation conversation = conversationRepo.findById(conversationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation Id not found" + conversationId));
+
+        return conversation;
+    }
+
     @PostMapping("/conversations")
     public Conversation createNewConversation(@RequestBody CreateConversationRequest request){
 
