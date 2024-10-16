@@ -30,7 +30,11 @@ public class ChatbotAiBackendApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		Profile profile = new Profile(
+
+		profileRepo.deleteAll();
+		conversationRepo.deleteAll();
+
+		Profile profile1 = new Profile(
 				"1",
 				"Dre",
 				"Bo",
@@ -42,15 +46,28 @@ public class ChatbotAiBackendApplication implements CommandLineRunner {
 				Mbt.ENFJ
 		);
 
-		profileRepo.save(profile);
+		Profile profile2 = new Profile(
+				"2",
+				"Andre",
+				"Ju",
+				80085,
+				"Zebra",
+				Gender.MALE,
+				"boobies.jpg",
+				"boobies.jpg",
+				Mbt.ESFP
+		);
+
+		profileRepo.save(profile1);
+		profileRepo.save(profile2);
 		profileRepo.findAll().forEach(System.out::println);
 
 		Conversation conversation = new Conversation(
 				"1",
-				profile.id(),
+				profile1.id(),
 				List.of(
 						new ChatMessage(
-								"Yoooo!!!", profile.id(), LocalDateTime.now()
+								"Yoooo!!!", profile1.id(), LocalDateTime.now()
 
 						)
 				)
