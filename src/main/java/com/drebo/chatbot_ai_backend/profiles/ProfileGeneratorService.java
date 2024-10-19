@@ -1,5 +1,7 @@
 package com.drebo.chatbot_ai_backend.profiles;
 
+import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.ollama.OllamaChatModel;
@@ -8,11 +10,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Description;
 import org.springframework.stereotype.Service;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
+@Slf4j
 @Service
 public class ProfileGeneratorService {
 
@@ -20,11 +25,13 @@ public class ProfileGeneratorService {
 
     private List<Profile> generatedProfilesList = new ArrayList<>();
 
+    private static final String PROFILES_FILE_PATH = "profiles.json";
+
     public ProfileGeneratorService(OllamaChatModel ollamaChatModel){
         this.ollamaChatModel = ollamaChatModel;
     }
 
-    public void generateProfile(int numberOfProfiles){
+    public void generateProfile(int numberOfProfiles) throws InterruptedException {
 
         //find age range. genders, and ethnicities
         List<Integer> ages = new ArrayList<>(List.of(20, 30, 40, 50));
@@ -34,37 +41,56 @@ public class ProfileGeneratorService {
         Collections.shuffle(genders);
         Collections.shuffle(ethnicities);
 
+        //for each combo of variables
         for(int age : ages) {
             for (Gender gender : genders) {
                 for (String ethnicity : ethnicities) {
                     if(this.generatedProfilesList.size() >= numberOfProfiles) {
+                        //save in json file
+                        saveProfilesToJson(this.generatedProfilesList);
+                        log.info("saved to json");
+
                         return;
                     }
                     String prompt = """
-                            Generate a creative fictional profile that includes a FICTIONAL first and last name, 
-                            age: %d, ethnicity: %s, gender: %s, and a Myers Briggs Personality type, 
-                            and a brief bio that this person would write to display personality.
-                            First name cannot be null, age cannot be null, gender cannot be null(GENDER.MALE, GENDER.FEMALE). 
+                            Create a dating app profile for a fictional person that includes a first and last name, 
+                            age: %d, ethnicity: %s, gender: %s, a Mbt (Myers Briggs Personality Type), and a brief bio. 
+                            Save in saveProfile() function.
                             """
                             .formatted(age, ethnicity, gender);
 
                     System.out.println(prompt);
 
+                    //call ollama to generate profile
                     ChatResponse response = ollamaChatModel.call(new Prompt(prompt,
                             OllamaOptions.builder().withFunction("saveProfile").build()));
 
                     System.out.println(response.getResult().getOutput().getContent());
+
+                    Thread.sleep(2000);
                 }
             }
         };
 
 
-
-        //for each combo of variables
-            //call ollama to generate profile
-            //save in json file
         //open json file and read contents into a Set<Profiles>
         //save to mongodb
+    }
+
+    private void saveProfilesToJson(List<Profile> generatedProfilesList) {
+
+        //convert profiles to json
+        String jsonProfiles = new Gson().toJson(generatedProfilesList);
+
+        //open file -> write content -> close file
+        try {
+            FileWriter fileWriter = new FileWriter(PROFILES_FILE_PATH);
+            fileWriter.write(jsonProfiles);
+            fileWriter.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     @Bean
