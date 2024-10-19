@@ -3,10 +3,9 @@ package com.drebo.chatbot_ai_backend;
 import com.drebo.chatbot_ai_backend.coversations.ChatMessage;
 import com.drebo.chatbot_ai_backend.coversations.Conversation;
 import com.drebo.chatbot_ai_backend.coversations.ConversationRepo;
-import com.drebo.chatbot_ai_backend.profiles.Gender;
-import com.drebo.chatbot_ai_backend.profiles.Mbt;
-import com.drebo.chatbot_ai_backend.profiles.Profile;
-import com.drebo.chatbot_ai_backend.profiles.ProfileRepo;
+import com.drebo.chatbot_ai_backend.profiles.*;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -19,10 +18,13 @@ import java.util.List;
 public class ChatbotAiBackendApplication implements CommandLineRunner {
 
 	@Autowired
-	ProfileRepo profileRepo;
+	private ProfileRepo profileRepo;
 
 	@Autowired
-	ConversationRepo conversationRepo;
+	private ConversationRepo conversationRepo;
+
+	@Autowired
+	private ProfileGeneratorService profileGeneratorService;
 
 	public static void main(String[] args) {
 		SpringApplication.run(ChatbotAiBackendApplication.class, args);
@@ -30,6 +32,8 @@ public class ChatbotAiBackendApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
+
+		profileGeneratorService.generateProfile(3);
 
 		profileRepo.deleteAll();
 		conversationRepo.deleteAll();
