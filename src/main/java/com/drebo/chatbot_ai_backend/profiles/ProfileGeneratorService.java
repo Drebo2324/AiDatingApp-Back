@@ -1,11 +1,13 @@
 package com.drebo.chatbot_ai_backend.profiles;
 
+import com.drebo.chatbot_ai_backend.Utils;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaOptions;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Description;
 import org.springframework.stereotype.Service;
@@ -13,7 +15,6 @@ import org.springframework.stereotype.Service;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
@@ -21,11 +22,17 @@ import java.util.function.Function;
 @Service
 public class ProfileGeneratorService {
 
-    private OllamaChatModel ollamaChatModel;
+    private final OllamaChatModel ollamaChatModel;
 
-    private List<Profile> generatedProfilesList = new ArrayList<>();
+    private final List<Profile> generatedProfilesList = new ArrayList<>();
 
     private static final String PROFILES_FILE_PATH = "profiles.json";
+
+    @Value("${startup-actions.initializeProfiles}")
+    private Boolean initializeProfiles;
+
+    @Value("${application.genderChoice}")
+    private String genderChoice;
 
     public ProfileGeneratorService(OllamaChatModel ollamaChatModel){
         this.ollamaChatModel = ollamaChatModel;
@@ -33,48 +40,32 @@ public class ProfileGeneratorService {
 
     public void generateProfile(int numberOfProfiles) throws InterruptedException {
 
-        //find age range. genders, and ethnicities
-        List<Integer> ages = new ArrayList<>(List.of(20, 30, 40, 50));
-        List<Gender> genders = new ArrayList<>(List.of(Gender.MALE, Gender.FEMALE));
-        List<String> ethnicities = new ArrayList<>(List.of("White", "Black", "Hispanic", "Asian"));
-        Collections.shuffle(ages);
-        Collections.shuffle(genders);
-        Collections.shuffle(ethnicities);
+        if(!this.initializeProfiles){
+            return;
+        }
 
-        //for each combo of variables
-        for(int age : ages) {
-            for (Gender gender : genders) {
-                for (String ethnicity : ethnicities) {
-                    if(this.generatedProfilesList.size() >= numberOfProfiles) {
-                        //save in json file
-                        saveProfilesToJson(this.generatedProfilesList);
-                        log.info("saved to json");
+        while(this.generatedProfilesList.size() < numberOfProfiles){
 
-                        return;
-                    }
-                    String prompt = """
-                            Create a dating app profile for a fictional person that includes a first and last name, 
-                            age: %d, ethnicity: %s, gender: %s, a Mbt (Myers Briggs Personality Type), and a brief bio. 
+            int age = Utils.randomNumber(20, 30);
+            String gender = genderChoice;
+            String ethnicity = Utils.randomEthnicity();
+            String mbt = Utils.randomMbt().toString();
+
+            String prompt = """
+                            Generate a dating app profile that must include first name, last name,
+                            age: %d, ethnicity: %s, gender: %s, a Myers Briggs Personality Type: %s, and a bio.
                             Save in saveProfile() function.
+                            Only generate the profile and no other commentary.
                             """
-                            .formatted(age, ethnicity, gender);
+                    .formatted(age, ethnicity, gender, mbt);
+            System.out.println(prompt);
 
-                    System.out.println(prompt);
-
-                    //call ollama to generate profile
-                    ChatResponse response = ollamaChatModel.call(new Prompt(prompt,
-                            OllamaOptions.builder().withFunction("saveProfile").build()));
-
-                    System.out.println(response.getResult().getOutput().getContent());
-
-                    Thread.sleep(2000);
-                }
-            }
-        };
-
-
-        //open json file and read contents into a Set<Profiles>
-        //save to mongodb
+            //call ollama to generate profile
+            ChatResponse response = ollamaChatModel.call(new Prompt(prompt,
+                    OllamaOptions.builder().withFunction("saveProfile").build()));
+            System.out.println(response.getResult().getOutput().getContent());
+        }
+        saveProfilesToJson(this.generatedProfilesList);
     }
 
     private void saveProfilesToJson(List<Profile> generatedProfilesList) {
@@ -94,7 +85,7 @@ public class ProfileGeneratorService {
     }
 
     @Bean
-    @Description("Save generated profiles")
+    @Description("Save AI generated profiles")
     public Function<Profile, Boolean> saveProfile(){
         return profile -> {
             System.out.println("function call");

@@ -37,47 +37,5 @@ public class ChatbotAiBackendApplication implements CommandLineRunner {
 
 		profileRepo.deleteAll();
 		conversationRepo.deleteAll();
-
-		Profile profile1 = new Profile(
-				"1",
-				"Dre",
-				"Bo",
-				69,
-				"Martian",
-				Gender.MALE,
-				"Likes receiving head",
-				"boobs.jpg",
-				Mbt.ENFJ
-		);
-
-		Profile profile2 = new Profile(
-				"2",
-				"Andre",
-				"Ju",
-				80085,
-				"Zebra",
-				Gender.MALE,
-				"I like boobs",
-				"boobies.jpg",
-				Mbt.ESFP
-		);
-
-		profileRepo.save(profile1);
-		profileRepo.save(profile2);
-		profileRepo.findAll().forEach(System.out::println);
-
-		Conversation conversation = new Conversation(
-				"1",
-				profile1.id(),
-				List.of(
-						new ChatMessage(
-								"Yoooo!!!", profile1.id(), LocalDateTime.now()
-
-						)
-				)
-		);
-
-		conversationRepo.save(conversation);
-		conversationRepo.findAll().forEach(System.out::println);
 	}
 }
