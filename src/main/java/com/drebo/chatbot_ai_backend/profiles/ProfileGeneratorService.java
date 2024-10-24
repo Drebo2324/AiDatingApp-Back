@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Description;
 import org.springframework.stereotype.Service;
 
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -20,22 +21,29 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Slf4j
 @Service
 public class ProfileGeneratorService {
 
+    private final ProfileRepo profileRepo;
+
     private static final String STABLE_DIFFUSION_API = "null";
 
     private final OllamaChatModel ollamaChatModel;
 
-    private HttpClient httpClient;
+    private final HttpClient httpClient;
 
     //create request builder for less repetition
-    private HttpRequest.Builder stableDiffusionRequestBuilder;
+    private final HttpRequest.Builder stableDiffusionRequestBuilder;
 
     private final List<Profile> generatedProfilesList = new ArrayList<>();
 
@@ -47,7 +55,8 @@ public class ProfileGeneratorService {
     @Value("${application.genderChoice}")
     private String genderChoice;
 
-    public ProfileGeneratorService(OllamaChatModel ollamaChatModel){
+    public ProfileGeneratorService(ProfileRepo profileRepo, OllamaChatModel ollamaChatModel){
+        this.profileRepo = profileRepo;
         this.ollamaChatModel = ollamaChatModel;
         this.httpClient = HttpClient.newHttpClient();
         this.stableDiffusionRequestBuilder = HttpRequest.newBuilder()
@@ -99,14 +108,16 @@ public class ProfileGeneratorService {
             generatedProfilesList.addAll(existingProfiles);
 
             //call stable diffusion for profiles with no image
+            List<Profile> profilesWithImages = new ArrayList<>();
             for(Profile profile : generatedProfilesList){
                 if(profile.imageUrl() == null){
                     profile = generateImage(profile);
+                    profilesWithImages.add(profile);
                 }
             }
 
             //convert profiles to json
-            String jsonProfiles = new Gson().toJson(generatedProfilesList);
+            String jsonProfiles = new Gson().toJson(profilesWithImages);
             //open file -> write content -> close file
             FileWriter fileWriter = new FileWriter(PROFILES_FILE_PATH);
             fileWriter.write(jsonProfiles);
@@ -117,6 +128,21 @@ public class ProfileGeneratorService {
     }
 
     private Profile generateImage(Profile profile) {
+
+        //uuid will be same as image url
+        String uuid = UUID.randomUUID().toString();
+        profile = new Profile(
+                uuid,
+                profile.firstName(),
+                profile.lastName(),
+                profile.age(),
+                profile.ethnicity(),
+                profile.gender(),
+                profile.bio(),
+                uuid + ".jpg",
+                profile.personalityType()
+
+        );
 
         //get request details
         String prompt = """
@@ -130,29 +156,54 @@ public class ProfileGeneratorService {
 
         String negativePrompt = "Low-res, text, error, cropped, bad quality, low quality, jpeg artifacts, ugly, unattractive, deformed";
         String jsonRequest = """
-                { "prompt": %s, "negative_prompt": %s
-                }
+                { "prompt": %s, "negative_prompt": %s, "steps": 2 }
                 """
                 .formatted(prompt, negativePrompt);
 
-        //make post request
+        //make post request to stable diffusion
         HttpRequest httpRequest = this.stableDiffusionRequestBuilder.POST(
                 HttpRequest.BodyPublishers.ofString(jsonRequest)).build();
 
         HttpResponse<String> response;
         try {
-            //image
+            //image response
             response = this.httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
 
+        //convert image.json -> image instance
+        record ImageResponse(List<String> images){}
+
+        Gson gson = new Gson();
+        ImageResponse imageResponse = gson.fromJson(response.body(), ImageResponse.class);
+        if(imageResponse.images() != null && imageResponse.images().isEmpty()){
+            String base64Image = imageResponse.images().getFirst();
+
+            //Decode Base64 to binary
+            byte[] imageBytes = Base64.getDecoder().decode(base64Image);
+            //define directory path
+            String directoryPath = "resources/static/images/";
+            //create full file path
+            String filePath = directoryPath + profile.imageUrl();
+            //check if directory exists
+            Path directory = Paths.get(directoryPath);
+            if(!Files.exists(directory)){
+                try{
+                    Files.createDirectories(directory);
+                } catch (IOException e){
+                    throw new RuntimeException(e);
+                }
+            }
+
+            //save image to file
+            try(FileOutputStream imageOutputFile = new FileOutputStream(filePath)){
+                imageOutputFile.write(imageBytes);
+            }catch (IOException e){
+                return null;
+            }
+        }
         return profile;
-
-        //save image to resource folder
-
-        //image -> profile.imageUrl
-
     }
 
     @Bean
@@ -165,5 +216,4 @@ public class ProfileGeneratorService {
             return true;
         };
     }
-
 }
