@@ -13,10 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Description;
 import org.springframework.stereotype.Service;
 
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -215,5 +212,19 @@ public class ProfileGeneratorService {
             this.generatedProfilesList.add(profile);
             return true;
         };
+    }
+
+    public void saveGeneratedProfilesToDb(){
+        Gson gson = new Gson();
+        try {
+            List<Profile> existingProfiles = gson.fromJson(
+                    new FileReader(PROFILES_FILE_PATH),
+                    new TypeToken<ArrayList<Profile>>(){}.getType()
+            );
+            profileRepo.deleteAll();
+            profileRepo.saveAll(existingProfiles);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
