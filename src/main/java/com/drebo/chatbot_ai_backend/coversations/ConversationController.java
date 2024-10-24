@@ -12,8 +12,8 @@ import java.util.UUID;
 @RestController
 public class ConversationController {
 
-    ConversationRepo conversationRepo;
-    ProfileRepo profileRepo;
+    private final ConversationRepo conversationRepo;
+    private final ProfileRepo profileRepo;
 
     public ConversationController(ConversationRepo conversationRepo, ProfileRepo profileRepo){
         this.conversationRepo = conversationRepo;
