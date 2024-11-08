@@ -38,5 +38,21 @@ public class Utils {
         Collections.shuffle(ethnicities);
         return ethnicities.getFirst();
     }
+
+    public static String randomSelfieTypes() {
+        List<String> selfieTypes = new ArrayList<>(List.of(
+                "closeup with head and partial shoulders",
+                "Reflection in a mirror",
+                "action selfie, person in motion",
+                "candid photo",
+                "standing in nature",
+                "sitting on a chair",
+                "indoor photograph",
+                "outdoor photograph"
+        ));
+
+        Collections.shuffle(selfieTypes);
+        return selfieTypes.getFirst();
+    }
 }
 

@@ -5,10 +5,7 @@ import com.drebo.chatbot_ai_backend.coversations.ConversationRepo;
 import com.drebo.chatbot_ai_backend.profiles.Profile;
 import com.drebo.chatbot_ai_backend.profiles.ProfileRepo;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
@@ -28,6 +25,7 @@ public class MatchController {
         this.conversationRepo = conversationRepo;
     }
 
+    @CrossOrigin(origins = "*")
     @PostMapping("/matches")
     public Match createNewMatch(@RequestBody CreateMatchRequest request){
 

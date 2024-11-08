@@ -26,7 +26,7 @@ public class ChatbotAiBackendApplication implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 
-		profileGeneratorService.generateProfile(3);
+		profileGeneratorService.generateProfile(0);
 		profileGeneratorService.saveGeneratedProfilesToDb();
 
 		profileRepo.deleteAll();

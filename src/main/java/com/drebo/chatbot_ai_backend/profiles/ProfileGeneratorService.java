@@ -3,6 +3,7 @@ package com.drebo.chatbot_ai_backend.profiles;
 import com.drebo.chatbot_ai_backend.Utils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -21,10 +22,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 @Slf4j
@@ -33,7 +31,7 @@ public class ProfileGeneratorService {
 
     private final ProfileRepo profileRepo;
 
-    private static final String STABLE_DIFFUSION_API = "null";
+    private static final String STABLE_DIFFUSION_API = "https://fe97a6a77c5448ab52.gradio.live/sdapi/v1/txt2img";
 
     private final OllamaChatModel ollamaChatModel;
 
@@ -51,6 +49,9 @@ public class ProfileGeneratorService {
 
     @Value("${application.genderChoice}")
     private String genderChoice;
+
+    @Value("${application.user}")
+    private Map<String, String> userProfileProperties;
 
     public ProfileGeneratorService(ProfileRepo profileRepo, OllamaChatModel ollamaChatModel){
         this.profileRepo = profileRepo;
@@ -127,7 +128,7 @@ public class ProfileGeneratorService {
     private Profile generateImage(Profile profile) {
 
         //uuid will be same as image url
-        String uuid = UUID.randomUUID().toString();
+        String uuid = StringUtils.isBlank(profile.id()) ? UUID.randomUUID().toString() : profile.id();
         profile = new Profile(
                 uuid,
                 profile.firstName(),
@@ -141,15 +142,17 @@ public class ProfileGeneratorService {
 
         );
 
+        String randomSelfie = Utils.randomSelfieTypes();
+
         //get request details
         String prompt = """
                 Generate a dating app profile image of a %d
                 years old, %s, %s.
                 Personality: %s
                 Bio: %s
-                Ultra-realistic, 4k DSLR, best quality
+                Ultra-realistic, 4k DSLR, best quality, %s
                 """
-                .formatted(profile.age(), profile.ethnicity(), profile.gender(), profile.personalityType(), profile.bio());
+                .formatted(profile.age(), profile.ethnicity(), profile.gender(), profile.personalityType(), profile.bio(), randomSelfie);
 
         String negativePrompt = "Low-res, text, error, cropped, bad quality, low quality, jpeg artifacts, ugly, unattractive, deformed";
         String jsonRequest = """
@@ -226,5 +229,19 @@ public class ProfileGeneratorService {
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
+
+        Profile userProfile = new Profile(
+                userProfileProperties.get("id"),
+                userProfileProperties.get("firstName"),
+                userProfileProperties.get("lastName"),
+                Integer.parseInt(userProfileProperties.get("age")),
+                userProfileProperties.get("ethnicity"),
+                Gender.valueOf(userProfileProperties.get("gender")),
+                userProfileProperties.get("bio"),
+                userProfileProperties.get("imageUrl"),
+                Mbt.valueOf(userProfileProperties.get("personalityType"))
+        );
+        System.out.println(userProfileProperties);
+        profileRepo.save(userProfile);
     }
 }
