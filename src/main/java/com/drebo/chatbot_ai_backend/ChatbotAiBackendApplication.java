@@ -1,6 +1,7 @@
 package com.drebo.chatbot_ai_backend;
 
 import com.drebo.chatbot_ai_backend.coversations.ConversationRepo;
+import com.drebo.chatbot_ai_backend.matches.MatchRepo;
 import com.drebo.chatbot_ai_backend.profiles.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -17,6 +18,9 @@ public class ChatbotAiBackendApplication implements CommandLineRunner {
 	private ConversationRepo conversationRepo;
 
 	@Autowired
+	private MatchRepo matchRepo;
+
+	@Autowired
 	private ProfileGeneratorService profileGeneratorService;
 
 	public static void main(String[] args) {
@@ -25,12 +29,14 @@ public class ChatbotAiBackendApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-
-		profileGeneratorService.generateProfile(0);
+		clearAllData();
 		profileGeneratorService.saveGeneratedProfilesToDb();
+	}
 
-		profileRepo.deleteAll();
+	private void clearAllData() {
 		conversationRepo.deleteAll();
+		matchRepo.deleteAll();
+		profileRepo.deleteAll();
 
 	}
 }

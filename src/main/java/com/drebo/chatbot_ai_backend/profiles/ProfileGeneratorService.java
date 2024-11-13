@@ -77,10 +77,13 @@ public class ProfileGeneratorService {
             String mbt = Utils.randomMbt().toString();
 
             String prompt = """
-                            Generate a dating app profile that must include first name, last name,
-                            age: %d, ethnicity: %s, gender: %s, a Myers Briggs Personality Type: %s, and a bio.
-                            Save in saveProfile() function.
-                            Only generate the profile and no other commentary.
+                            Generate a dating app profile and no other commentary:
+                            Age: %d,
+                            Ethnicity: %s,
+                            Gender: %s,
+                            Myers-Briggs Personality Type: %s,
+                            Bio: ,
+                            Save with saveProfile() function.
                             """
                     .formatted(age, ethnicity, gender, mbt);
             System.out.println(prompt);
@@ -146,13 +149,15 @@ public class ProfileGeneratorService {
 
         //get request details
         String prompt = """
-                Generate a dating app profile image of a %d
-                years old, %s, %s.
-                Personality: %s
+                Generate a dating app profile image:
+                Age: %d
+                Ethnicity: %s,
+                Gender: %s.
+                Myers-Briggs Personality Type: %s
                 Bio: %s
-                Ultra-realistic, 4k DSLR, best quality, %s
+                Image: Ultra-realistic, 4k DSLR, best quality, %s
                 """
-                .formatted(profile.age(), profile.ethnicity(), profile.gender(), profile.personalityType(), profile.bio(), randomSelfie);
+                .formatted(profile.age(), profile.ethnicity(), profile.gender().toString(), profile.personalityType().toString(), profile.bio(), randomSelfie);
 
         String negativePrompt = "Low-res, text, error, cropped, bad quality, low quality, jpeg artifacts, ugly, unattractive, deformed";
         String jsonRequest = """
