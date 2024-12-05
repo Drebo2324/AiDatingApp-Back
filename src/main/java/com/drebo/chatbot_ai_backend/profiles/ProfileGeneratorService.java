@@ -86,12 +86,12 @@ public class ProfileGeneratorService {
                             Save with saveProfile() function.
                             """
                     .formatted(age, ethnicity, gender, mbt);
-            System.out.println(prompt);
+            log.info(prompt);
 
             //call ollama to generate profile
             ChatResponse response = ollamaChatModel.call(new Prompt(prompt,
                     OllamaOptions.builder().withFunction("saveProfile").build()));
-            System.out.println(response.getResult().getOutput().getContent());
+            log.info(response.getResult().getOutput().getContent());
         }
         saveProfilesToJson(this.generatedProfilesList);
     }
@@ -131,7 +131,7 @@ public class ProfileGeneratorService {
     private Profile generateImage(Profile profile) {
 
         //uuid will be same as image url
-        String uuid = StringUtils.isBlank(profile.id()) ? UUID.randomUUID().toString() : profile.id();
+        String uuid = profile.id().isBlank() ? UUID.randomUUID().toString() : profile.id();
         profile = new Profile(
                 uuid,
                 profile.firstName(),
@@ -215,8 +215,8 @@ public class ProfileGeneratorService {
     @Description("Save AI generated profiles")
     public Function<Profile, Boolean> saveProfile(){
         return profile -> {
-            System.out.println("function call");
-            System.out.println(profile);
+            log.info("function call");
+            log.info(String.valueOf(profile));
             this.generatedProfilesList.add(profile);
             return true;
         };

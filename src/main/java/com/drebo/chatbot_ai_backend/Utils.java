@@ -24,8 +24,9 @@ public class Utils {
     }
 
     public static String randomEthnicity(){
+        Random random  = new Random();
 
-        List<String> ethnicities = new ArrayList<>(List.of(
+        List<String> ethnicities = List.of(
                 "Asian",
                 "Hispanic",
                 "Black",
@@ -33,14 +34,19 @@ public class Utils {
                 "Indian",
                 "South East Asian",
                 "Middle Eastern",
-                "Native American"));
+                "Native American");
 
-        Collections.shuffle(ethnicities);
-        return ethnicities.getFirst();
+        int i = random.nextInt(ethnicities.size());
+        return ethnicities.get(i);
+
+//        Collections.shuffle(ethnicities);
+//        return ethnicities.getFirst();
     }
 
     public static String randomSelfieTypes() {
-        List<String> selfieTypes = new ArrayList<>(List.of(
+        Random random = new Random();
+
+        List<String> selfieTypes = List.of(
                 "closeup with head and partial shoulders",
                 "Reflection in a mirror",
                 "action selfie, person in motion",
@@ -49,10 +55,14 @@ public class Utils {
                 "sitting on a chair",
                 "indoor photograph",
                 "outdoor photograph"
-        ));
+        );
 
-        Collections.shuffle(selfieTypes);
-        return selfieTypes.getFirst();
+        int i = random.nextInt(selfieTypes.size());
+        return selfieTypes.get(i);
+
+
+//        Collections.shuffle(selfieTypes);
+//        return selfieTypes.getFirst();
     }
 }
 
