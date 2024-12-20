@@ -3,7 +3,6 @@ package com.drebo.chatbot_ai_backend.profiles;
 import com.drebo.chatbot_ai_backend.Utils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
