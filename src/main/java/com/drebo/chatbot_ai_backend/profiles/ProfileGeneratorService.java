@@ -52,13 +52,16 @@ public class ProfileGeneratorService {
     @Value("${application.user}")
     private Map<String, String> userProfileProperties;
 
+    @Value("${stablediffusion.api}")
+    private String stableDiffusionApi;
+
     public ProfileGeneratorService(ProfileRepo profileRepo, OllamaChatModel ollamaChatModel){
         this.profileRepo = profileRepo;
         this.ollamaChatModel = ollamaChatModel;
         this.httpClient = HttpClient.newHttpClient();
         this.stableDiffusionRequestBuilder = HttpRequest.newBuilder()
                 .setHeader("Content-type", "application/json")
-                .uri(URI.create(STABLE_DIFFUSION_API))
+                .uri(URI.create(stableDiffusionApi))
         ;
     }
 
